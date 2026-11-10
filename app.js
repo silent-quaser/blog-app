@@ -271,17 +271,20 @@ async function renderHomePosts() {
       .map(
         (post) => `
       <article class="blog-card">
-        <img src="${post.image}" alt="${post.title}" class="blog-card-img" onerror="this.src='https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=700&q=80'" />
+        <a href="blog-detail.html?id=${post.id}">
+          <img src="${post.image}" alt="${post.title}" class="blog-card-img" onerror="this.src='https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=700&q=80'" />
+        </a>
         <div class="blog-card-body">
           <span class="blog-category">${post.category}</span>
-          <h3 class="blog-title">${post.title}</h3>
+          <h3 class="blog-title"><a href="blog-detail.html?id=${post.id}">${post.title}</a></h3>
           <p class="blog-excerpt">${post.excerpt}</p>
           <div class="blog-meta">
             <span class="blog-author">By ${post.author}</span>
             <span>${post.date}</span>
           </div>
-          <div style="margin-top: 1rem;">
-            <button class="btn btn-secondary btn-sm btn-block" onclick="openPostModal('${post.id}')">Read Full Article</button>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <a href="blog-detail.html?id=${post.id}" class="btn btn-primary btn-sm" style="flex: 1;">View Article</a>
+            <button class="btn btn-secondary btn-sm" onclick="openPostModal('${post.id}')" title="Quick Preview">👁️</button>
           </div>
         </div>
       </article>
@@ -446,12 +449,12 @@ async function renderDashboardData() {
       .map(
         (post) => `
       <tr>
-        <td><strong>${post.title}</strong></td>
+        <td><strong><a href="blog-detail.html?id=${post.id}" style="color: var(--primary);">${post.title}</a></strong></td>
         <td><span class="blog-category" style="margin: 0;">${post.category}</span></td>
         <td>${post.date}</td>
         <td>
           <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="openPostModal('${post.id}')">View</button>
+            <a href="blog-detail.html?id=${post.id}" class="btn btn-secondary btn-sm">View Page</a>
             <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')">Delete</button>
           </div>
         </td>

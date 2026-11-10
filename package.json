@@ -6,11 +6,21 @@
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": ["blog", "express", "nodejs", "rest-api", "frontend"],
+  "keywords": [
+    "blog",
+    "express",
+    "nodejs",
+    "rest-api",
+    "frontend"
+  ],
   "author": "silent-quaser",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "dotenv": "^18.0.10",
+    "express": "^4.19.2",
+    "mongoose": "^9.12.1"
   }
 }

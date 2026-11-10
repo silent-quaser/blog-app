@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Article Details | DevLog</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .article-container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 4rem;
+    }
+
+    .back-nav {
+      margin-bottom: 2rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 0.2s;
+    }
+
+    .back-nav:hover {
+      transform: translateX(-4px);
+    }
+
+    .article-header {
+      margin-bottom: 2rem;
+    }
+
+    .article-title {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--text-main);
+      margin: 1rem 0;
+      letter-spacing: -0.5px;
+    }
+
+    .article-meta-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 1.25rem 0;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .author-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .article-featured-img {
+      width: 100%;
+      max-height: 440px;
+      object-fit: cover;
+      border-radius: var(--radius-lg);
+      margin: 2rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .article-excerpt {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--primary);
+      padding-left: 1.25rem;
+    }
+
+    .article-body-content {
+      font-size: 1.125rem;
+      line-height: 1.85;
+      color: #334155;
+      white-space: pre-line;
+      margin-bottom: 3rem;
+    }
+
+    .article-footer-box {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .db-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .article-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks"></ul>
+    </div>
+  </header>
+
+  <!-- Article Detail Main Content -->
+  <main>
+    <div class="article-container" id="articleContainer">
+      <a href="index.html" class="back-nav">← Back to All Articles</a>
+
+      <div id="loadingState" style="text-align: center; padding: 4rem 1rem;">
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Retrieving article details from database...</p>
+      </div>
+
+      <div id="errorState" style="display: none; text-align: center; padding: 4rem 1rem; background: #fff; border-radius: 12px; border: 1px solid var(--border-color);">
+        <h2 style="color: var(--danger); margin-bottom: 0.5rem;">Article Not Found</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The requested blog post could not be retrieved from the database.</p>
+        <a href="index.html" class="btn btn-primary">Return to Homepage</a>
+      </div>
+
+      <article id="articleContent" style="display: none;">
+        <div class="article-header">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <span class="blog-category" id="articleCategory">Category</span>
+            <span class="db-badge" id="dbStatusBadge">🗄️ Database: Verified</span>
+          </div>
+          <h1 class="article-title" id="articleTitle"></h1>
+
+          <div class="article-meta-bar">
+            <div class="author-info">
+              <div class="author-avatar" id="authorAvatar">A</div>
+              <div>
+                <div style="font-weight: 700; color: var(--text-main);" id="authorName">Author Name</div>
+                <div style="font-size: 0.825rem; color: var(--text-muted);" id="authorRole">Published Author</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+              <span id="articleDate">Date</span>
+              <span>•</span>
+              <span id="readingTime">3 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <img id="articleImage" src="" alt="Cover Image" class="article-featured-img" onerror="this.src='https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80'" />
+
+        <div class="article-excerpt" id="articleExcerpt"></div>
+
+        <div class="article-body-content" id="articleBody"></div>
+
+        <!-- Article Footer / Share Box -->
+        <div class="article-footer-box">
+          <div>
+            <h4 style="font-size: 1rem; margin-bottom: 0.25rem;">Enjoyed this article?</h4>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Share with your friends and fellow developers.</p>
+          </div>
+          <div class="share-buttons">
+            <button class="btn btn-secondary btn-sm" onclick="copyArticleLink()">🔗 Copy Link</button>
+            <a href="index.html" class="btn btn-primary btn-sm">Explore More Blogs</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS, JavaScript, Node.js & Database.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Load Article Detail from Database API
+    async function loadArticleDetail() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get("id");
+
+      const loadingEl = document.getElementById("loadingState");
+      const errorEl = document.getElementById("errorState");
+      const contentEl = document.getElementById("articleContent");
+
+      if (!postId) {
+        loadingEl.style.display = "none";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/blogs/${encodeURIComponent(postId)}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success || !data.blog) {
+          loadingEl.style.display = "none";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        const post = data.blog;
+
+        // Populate fields
+        document.title = `${post.title} | DevLog`;
+        document.getElementById("articleCategory").textContent = post.category;
+        document.getElementById("articleTitle").textContent = post.title;
+        document.getElementById("authorName").textContent = post.author || "Anonymous";
+        document.getElementById("authorAvatar").textContent = (post.author || "A").charAt(0).toUpperCase();
+        document.getElementById("articleDate").textContent = post.date || "Recent";
+        document.getElementById("articleImage").src = post.image || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80";
+        document.getElementById("articleExcerpt").textContent = post.excerpt;
+        document.getElementById("articleBody").textContent = post.content;
+
+        if (data.database) {
+          document.getElementById("dbStatusBadge").textContent = `🗄️ Database: ${data.database}`;
+        }
+
+        // Estimate reading time
+        const wordCount = (post.content || "").split(/\s+/).length;
+        const minutes = Math.max(1, Math.ceil(wordCount / 200));
+        document.getElementById("readingTime").textContent = `${minutes} min read`;
+
+        loadingEl.style.display = "none";
+        contentEl.style.display = "block";
+      } catch (err) {
+        console.error("Error loading article:", err);
+        loadingEl.style.display = "none";
+        errorEl.style.display = "block";
+      }
+    }
+
+    function copyArticleLink() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        alert("Article link copied to clipboard!");
+      }).catch(() => {
+        prompt("Copy this URL:", window.location.href);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadArticleDetail();
+    });
+  </script>
+</body>
+</html>

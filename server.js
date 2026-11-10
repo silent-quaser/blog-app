@@ -1,48 +1,16 @@
 /* ==========================================================================
    DevLog Backend Server - Node.js & Express.js REST API
+   Secure Database Integration: MongoDB / Supabase with Bcrypt Encryption
    ========================================================================== */
 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Data paths
-const DATA_DIR = path.join(__dirname, 'data');
-const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
-// Ensure data folder and files exist
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-function readJSON(file, defaultValue = []) {
-  try {
-    if (!fs.existsSync(file)) {
-      fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2));
-      return defaultValue;
-    }
-    const data = fs.readFileSync(file, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    console.error(`Error reading ${file}:`, err);
-    return defaultValue;
-  }
-}
-
-function writeJSON(file, data) {
-  try {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (err) {
-    console.error(`Error writing ${file}:`, err);
-    return false;
-  }
-}
 
 // Middleware
 app.use(cors());
@@ -62,266 +30,226 @@ app.use(express.static(path.join(__dirname)));
    REST APIs
    ========================================================================== */
 
-// Health Check API
+// 1. Health Check & Database Status
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
+    database: db.getDatabaseStatus(),
     timestamp: new Date().toISOString(),
-    service: 'DevLog Express Backend'
+    service: 'DevLog Full-Stack Express Server'
   });
 });
 
-/* --------------------------------------------------------------------------
-   1. User Registration API (POST /api/auth/register or /api/register)
-   -------------------------------------------------------------------------- */
-const handleRegister = (req, res) => {
-  const { name, email, password } = req.body;
+// 2. User Registration API (Securely hashed credentials)
+const handleRegister = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required fields.'
+      });
+    }
+
+    const user = await db.registerUser({ name, email, password });
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully and credentials stored securely!',
+      user
+    });
+  } catch (err) {
     return res.status(400).json({
       success: false,
-      message: 'Name, email, and password are required fields.'
+      message: err.message || 'Registration failed.'
     });
   }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  const users = readJSON(USERS_FILE, []);
-
-  const existingUser = users.find((u) => u.email.toLowerCase() === normalizedEmail);
-  if (existingUser) {
-    return res.status(409).json({
-      success: false,
-      message: 'An account with this email address already exists.'
-    });
-  }
-
-  const newUser = {
-    id: 'user-' + Date.now(),
-    name: name.trim(),
-    email: normalizedEmail,
-    password: password, // Note: In production, hash with bcrypt
-    createdAt: new Date().toISOString()
-  };
-
-  users.push(newUser);
-  writeJSON(USERS_FILE, users);
-
-  return res.status(201).json({
-    success: true,
-    message: 'User registered successfully!',
-    user: {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email
-    }
-  });
 };
 
 app.post('/api/auth/register', handleRegister);
 app.post('/api/register', handleRegister);
 
-/* --------------------------------------------------------------------------
-   2. User Login API (POST /api/auth/login or /api/login)
-   -------------------------------------------------------------------------- */
-const handleLogin = (req, res) => {
-  const { email, password } = req.body;
+// 3. User Login API (Bcrypt password verification)
+const handleLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email and password are required.'
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required.'
+      });
+    }
+
+    const user = await db.loginUser({ email, password });
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful!',
+      user
     });
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  const users = readJSON(USERS_FILE, []);
-
-  const user = users.find(
-    (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
-  );
-
-  if (!user) {
+  } catch (err) {
     return res.status(401).json({
       success: false,
-      message: 'Invalid email or password.'
+      message: err.message || 'Invalid credentials.'
     });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: 'Login successful!',
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email
-    }
-  });
 };
 
 app.post('/api/auth/login', handleLogin);
 app.post('/api/login', handleLogin);
 
-/* --------------------------------------------------------------------------
-   3. Get Blogs API (GET /api/blogs or /api/posts)
-   -------------------------------------------------------------------------- */
-const handleGetBlogs = (req, res) => {
-  const { category, search, authorEmail } = req.query;
-  let posts = readJSON(POSTS_FILE, []);
+// 4. Retrieve All Blogs from Database
+const handleGetBlogs = async (req, res) => {
+  try {
+    const { category, search, authorEmail } = req.query;
+    const blogs = await db.getAllBlogs({ category, search, authorEmail });
 
-  if (category && category !== 'All') {
-    posts = posts.filter(
-      (p) => p.category.toLowerCase() === category.toLowerCase()
-    );
+    res.json({
+      success: true,
+      count: blogs.length,
+      database: db.getDatabaseStatus(),
+      blogs
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve blogs from database.',
+      error: err.message
+    });
   }
-
-  if (search) {
-    const q = search.toLowerCase();
-    posts = posts.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.excerpt.toLowerCase().includes(q) ||
-        p.author.toLowerCase().includes(q)
-    );
-  }
-
-  if (authorEmail) {
-    posts = posts.filter((p) => p.authorEmail === authorEmail);
-  }
-
-  res.json({
-    success: true,
-    count: posts.length,
-    blogs: posts
-  });
 };
 
 app.get('/api/blogs', handleGetBlogs);
 app.get('/api/posts', handleGetBlogs);
 
-/* --------------------------------------------------------------------------
-   4. Get Single Blog API (GET /api/blogs/:id)
-   -------------------------------------------------------------------------- */
-const handleGetSingleBlog = (req, res) => {
-  const { id } = req.params;
-  const posts = readJSON(POSTS_FILE, []);
-  const post = posts.find((p) => p.id === id);
+// 5. Retrieve Individual Blog Details by ID
+const handleGetSingleBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const blog = await db.getBlogById(id);
 
-  if (!post) {
-    return res.status(404).json({
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog post not found in database.'
+      });
+    }
+
+    res.json({
+      success: true,
+      database: db.getDatabaseStatus(),
+      blog
+    });
+  } catch (err) {
+    res.status(500).json({
       success: false,
-      message: 'Blog post not found.'
+      message: 'Error fetching blog details.',
+      error: err.message
     });
   }
-
-  res.json({
-    success: true,
-    blog: post
-  });
 };
 
 app.get('/api/blogs/:id', handleGetSingleBlog);
 app.get('/api/posts/:id', handleGetSingleBlog);
 
-/* --------------------------------------------------------------------------
-   5. Create Blog API (POST /api/blogs or /api/posts)
-   -------------------------------------------------------------------------- */
-const handleCreateBlog = (req, res) => {
-  const { title, category, excerpt, content, author, authorEmail, image } = req.body;
+// 6. Create & Store Blog Post in Database
+const handleCreateBlog = async (req, res) => {
+  try {
+    const { title, category, excerpt, content, author, authorEmail, image } = req.body;
 
-  if (!title || !category || !excerpt || !content) {
-    return res.status(400).json({
+    if (!title || !category || !excerpt || !content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, category, excerpt, and content are required fields.'
+      });
+    }
+
+    const blog = await db.createBlog({
+      title,
+      category,
+      excerpt,
+      content,
+      author,
+      authorEmail,
+      image
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Blog post saved securely to database!',
+      blog
+    });
+  } catch (err) {
+    return res.status(500).json({
       success: false,
-      message: 'Title, category, excerpt, and content are required fields.'
+      message: 'Failed to save blog post to database.',
+      error: err.message
     });
   }
-
-  const posts = readJSON(POSTS_FILE, []);
-
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  const dateStr = new Date().toLocaleDateString('en-US', options);
-
-  const newPost = {
-    id: 'post-' + Date.now(),
-    title: title.trim(),
-    category: category.trim(),
-    excerpt: excerpt.trim(),
-    content: content.trim(),
-    author: author ? author.trim() : 'Anonymous Author',
-    authorEmail: authorEmail ? authorEmail.trim() : '',
-    image: image && image.trim() !== '' ? image.trim() : 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=700&q=80',
-    date: dateStr,
-    createdAt: new Date().toISOString()
-  };
-
-  posts.unshift(newPost);
-  writeJSON(POSTS_FILE, posts);
-
-  return res.status(201).json({
-    success: true,
-    message: 'Blog post created successfully!',
-    blog: newPost
-  });
 };
 
 app.post('/api/blogs', handleCreateBlog);
 app.post('/api/posts', handleCreateBlog);
 
-/* --------------------------------------------------------------------------
-   6. Delete Blog API (DELETE /api/blogs/:id)
-   -------------------------------------------------------------------------- */
-const handleDeleteBlog = (req, res) => {
-  const { id } = req.params;
-  let posts = readJSON(POSTS_FILE, []);
+// 7. Delete Blog Post from Database
+const handleDeleteBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await db.deleteBlog(id);
 
-  const initialLength = posts.length;
-  posts = posts.filter((p) => p.id !== id);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog post not found in database.'
+      });
+    }
 
-  if (posts.length === initialLength) {
-    return res.status(404).json({
+    return res.json({
+      success: true,
+      message: 'Blog post deleted from database successfully!'
+    });
+  } catch (err) {
+    return res.status(500).json({
       success: false,
-      message: 'Blog post not found.'
+      message: 'Failed to delete blog post from database.',
+      error: err.message
     });
   }
-
-  writeJSON(POSTS_FILE, posts);
-
-  return res.json({
-    success: true,
-    message: 'Blog post deleted successfully!'
-  });
 };
 
 app.delete('/api/blogs/:id', handleDeleteBlog);
 app.delete('/api/posts/:id', handleDeleteBlog);
 
-/* --------------------------------------------------------------------------
-   7. Dashboard Stats API (GET /api/dashboard/stats)
-   -------------------------------------------------------------------------- */
-app.get('/api/dashboard/stats', (req, res) => {
-  const { userEmail } = req.query;
-  const posts = readJSON(POSTS_FILE, []);
+// 8. Dashboard Statistics API
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const { userEmail } = req.query;
+    const stats = await db.getStats(userEmail);
 
-  const totalPosts = posts.length;
-  const uniqueAuthors = new Set(posts.map((p) => p.author)).size;
-  const userPosts = userEmail
-    ? posts.filter((p) => p.authorEmail === userEmail).length
-    : 0;
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to compute dashboard statistics.'
+    });
+  }
+});
 
-  res.json({
-    success: true,
-    stats: {
-      totalPosts,
-      userPosts,
-      uniqueAuthors
-    }
+// Start Server and Initialize Database
+async function startServer() {
+  await db.initDatabase();
+
+  app.listen(PORT, () => {
+    console.log(`=================================================`);
+    console.log(`🚀 DevLog Express & Database Server running on ${PORT}`);
+    console.log(`🗄️ Active Database: ${db.getDatabaseStatus()}`);
+    console.log(`📡 REST API Base:  http://localhost:${PORT}/api`);
+    console.log(`🌐 Application UI: http://localhost:${PORT}`);
+    console.log(`=================================================`);
   });
-});
+}
 
-// Start the Express Server
-app.listen(PORT, () => {
-  console.log(`=========================================`);
-  console.log(`🚀 DevLog Express Server running on port ${PORT}`);
-  console.log(`📡 REST API Base: http://localhost:${PORT}/api`);
-  console.log(`🌐 Frontend UI:  http://localhost:${PORT}`);
-  console.log(`=========================================`);
-});
+startServer();

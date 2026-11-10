@@ -3,7 +3,7 @@
     "id": "user-1",
     "name": "Demo User",
     "email": "demo@example.com",
-    "password": "password123",
+    "password": "$2b$10$O3X5gokTZ9DFWd0qCQlr3.M9HFZbae9s/4ux.PdhDurM9FDk2n5TW",
     "createdAt": "2026-11-01T10:00:00.000Z"
   }
 ]

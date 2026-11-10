@@ -1,55 +1,83 @@
-# DevLog - Full-Stack Blog Application
+# DevLog - Full-Stack Secure Blog Application
 
-A complete full-stack web application with **HTML5/CSS3/Vanilla JavaScript** frontend connected to a **Node.js & Express.js** backend providing RESTful APIs.
+A complete full-stack blog platform built with **HTML5/CSS3/JavaScript**, a **Node.js & Express.js** backend, and **Database Persistence (MongoDB / Supabase / Bcrypt)**.
 
 ---
 
-## 🎯 Completed Objectives
+## 🎯 Completed Key Objectives
 
-### 1. Backend Server Setup
-- Built with **Node.js** and **Express.js**.
-- Integrated with `cors`, `express.json()`, request logging middleware, and static asset delivery.
-- JSON-based persistent storage (`data/users.json` and `data/posts.json`).
+### 1. Database Connection (MongoDB / Supabase)
+- **MongoDB Integration (Mongoose):** Connects to any local MongoDB or remote MongoDB Atlas cluster using `MONGODB_URI`.
+- **Supabase Integration:** Connects seamlessly to Supabase using `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+- **Adaptive Fallback Engine:** Features an encrypted local fallback database engine, ensuring the platform runs immediately with zero crashes even before external database credentials are provided.
 
-### 2. REST API Endpoints Created
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | User registration (Validates fields, checks duplicates, creates user) |
-| `POST` | `/api/auth/login` | User login (Validates email & password, creates session) |
-| `GET` | `/api/blogs` | Retrieves all blogs with support for `?category=`, `?search=`, and `?authorEmail=` |
-| `GET` | `/api/blogs/:id` | Retrieves a single blog by ID for the reader modal |
-| `POST` | `/api/blogs` | Creates and publishes a new blog post |
-| `DELETE` | `/api/blogs/:id` | Deletes a blog post by ID |
-| `GET` | `/api/dashboard/stats` | Calculates total blogs, user blogs, and unique author metrics |
-| `GET` | `/api/health` | Health check endpoint |
+### 2. Secure Data Storage
+- **Password Hashing:** User passwords are encrypted with **`bcryptjs`** with 10 salt rounds before being stored. Plain text credentials are never saved.
+- **Credential Verification:** Secure hash comparisons during authentication (`bcrypt.compare`).
+- **Data Validation:** Strict validation of required fields for user registration, login, and blog publishing.
 
-### 3. Frontend to Backend Integration
-- All 5 pages (`index.html`, `login.html`, `register.html`, `dashboard.html`, `create-blog.html`) consume the REST APIs via standard `fetch()` with `async/await`.
-- Dynamic UI updates without page reloads.
+### 3. Retrieve and Display Blogs from Database
+- REST APIs (`GET /api/blogs` and `GET /api/blogs/:id`) retrieve blog posts directly from the database.
+- Live database queries with instant search filtering, category tags, and author filtering.
+
+### 4. Dedicated Individual Blog Details Page
+- **`blog-detail.html`**: A dedicated article page displaying:
+  - Full article header with category badge, title, author info, and estimated reading time.
+  - High-resolution featured cover image.
+  - Formatted article excerpt and body content.
+  - Share options (Copy Link) and navigation back to all articles.
+
+---
+
+## 📂 Project Structure
+
+```
+blog-app/
+├── blog-detail.html     # Dedicated page to view individual blog details
+├── index.html           # Home page with live blog feed & database status
+├── login.html           # User login with secure credential verification
+├── register.html        # User registration with bcrypt password hashing
+├── dashboard.html       # Author dashboard with stats and post management
+├── create-blog.html     # Blog publishing interface
+├── style.css            # Responsive CSS Grid & Flexbox styles
+├── app.js               # Frontend API client and DOM rendering
+├── server.js            # Express.js REST API server
+├── db.js                # Database abstraction layer (MongoDB / Supabase / Bcrypt)
+├── .env.example         # Environment variables template
+├── data/
+│   ├── posts.json       # Persistent blog storage
+│   └── users.json       # Secure user storage (hashed passwords)
+└── package.json         # Project dependencies
+```
+
+---
+
+## ⚙️ Environment Configuration
+
+Copy `.env.example` to `.env` to configure your database:
+
+```env
+PORT=3000
+
+# Option A: Connect to MongoDB (Local or Atlas)
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/blogapp
+
+# Option B: Connect to Supabase
+SUPABASE_URL=https://<your-project>.supabase.co
+SUPABASE_ANON_KEY=<your-anon-key>
+```
 
 ---
 
 ## 🚀 How to Run Locally
 
-1. Open your terminal in the `blog-app` directory:
-   ```bash
-   cd blog-app
-   ```
-2. Install dependencies (if not already installed):
+1. Install dependencies:
    ```bash
    npm install
    ```
-3. Start the Express server:
+2. Start the server:
    ```bash
    npm start
-   # or: node server.js
    ```
-4. Open your browser at:
+3. Open your browser at:
    👉 **http://localhost:3000**
-
----
-
-## 🔑 Test Account Credentials
-- **Email:** `demo@example.com`
-- **Password:** `password123`
-*(Or register a new account on the Register page).*
