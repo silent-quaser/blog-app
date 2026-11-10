@@ -202,6 +202,7 @@
             <p style="color: var(--text-muted); font-size: 0.875rem;">Share with your friends and fellow developers.</p>
           </div>
           <div class="share-buttons">
+            <a id="editArticleBtn" href="#" class="btn btn-secondary btn-sm" style="display: none; color: var(--primary); font-weight: 600;">✏️ Edit Article</a>
             <button class="btn btn-secondary btn-sm" onclick="copyArticleLink()">🔗 Copy Link</button>
             <a href="index.html" class="btn btn-primary btn-sm">Explore More Blogs</a>
           </div>
@@ -259,6 +260,12 @@
 
         if (data.database) {
           document.getElementById("dbStatusBadge").textContent = `🗄️ Database: ${data.database}`;
+        }
+
+        const editBtn = document.getElementById("editArticleBtn");
+        if (editBtn) {
+          editBtn.href = `edit-blog.html?id=${encodeURIComponent(post.id)}`;
+          editBtn.style.display = "inline-flex";
         }
 
         // Estimate reading time

@@ -191,7 +191,47 @@ const handleCreateBlog = async (req, res) => {
 app.post('/api/blogs', handleCreateBlog);
 app.post('/api/posts', handleCreateBlog);
 
-// 7. Delete Blog Post from Database
+// 7. Update Blog Post in Database (PUT /api/blogs/:id or PATCH /api/blogs/:id)
+const handleUpdateBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, category, excerpt, content, image } = req.body;
+
+    const updatedBlog = await db.updateBlog(id, {
+      title,
+      category,
+      excerpt,
+      content,
+      image
+    });
+
+    if (!updatedBlog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog post not found in database.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Blog post updated successfully in database!',
+      blog: updatedBlog
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update blog post.',
+      error: err.message
+    });
+  }
+};
+
+app.put('/api/blogs/:id', handleUpdateBlog);
+app.patch('/api/blogs/:id', handleUpdateBlog);
+app.put('/api/posts/:id', handleUpdateBlog);
+app.patch('/api/posts/:id', handleUpdateBlog);
+
+// 8. Delete Blog Post from Database
 const handleDeleteBlog = async (req, res) => {
   try {
     const { id } = req.params;

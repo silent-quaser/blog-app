@@ -1,14 +1,15 @@
 [
   {
     "id": "post-1",
-    "title": "Mastering HTML5 & Semantic Web Architecture",
+    "title": "Mastering HTML5 & Semantic Web Architecture (Updated)",
     "category": "Development",
     "author": "Alex Morgan",
     "authorEmail": "alex@example.com",
     "date": "Nov 02, 2026",
-    "excerpt": "Learn how modern HTML5 semantic tags improve accessibility, search engine indexing, and structure in responsive web design.",
-    "content": "Semantic HTML is the foundation of accessible and well-structured web applications. By using elements such as <header>, <nav>, <main>, <article>, and <section>, developers convey meaning to assistive technologies, search engines, and other developers. In this guide, we dive deep into the best practices for structuring responsive user interfaces.",
-    "image": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=700&q=80"
+    "excerpt": "Updated excerpt for testing CRUD update feature",
+    "content": "Updated content for testing full CRUD operations.",
+    "image": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=700&q=80",
+    "updatedAt": "2026-11-10T16:28:14.755Z"
   },
   {
     "id": "post-2",

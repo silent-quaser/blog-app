@@ -334,6 +334,45 @@ async function createBlog({ title, category, excerpt, content, author, authorEma
   return blogData;
 }
 
+async function updateBlog(id, { title, category, excerpt, content, image }) {
+  const updates = {};
+  if (title !== undefined) updates.title = title.trim();
+  if (category !== undefined) updates.category = category.trim();
+  if (excerpt !== undefined) updates.excerpt = excerpt.trim();
+  if (content !== undefined) updates.content = content.trim();
+  if (image !== undefined && image.trim() !== '') updates.image = image.trim();
+  updates.updatedAt = new Date().toISOString();
+
+  // MongoDB
+  if (activeDbType === 'MongoDB' && PostModel) {
+    let updated = await PostModel.findOneAndUpdate({ id }, { $set: updates }, { new: true }).lean();
+    if (!updated && mongoose.Types.ObjectId.isValid(id)) {
+      updated = await PostModel.findByIdAndUpdate(id, { $set: updates }, { new: true }).lean();
+    }
+    return updated ? { ...updated, id: updated.id || updated._id.toString() } : null;
+  }
+
+  // Supabase
+  if (activeDbType === 'Supabase' && supabase) {
+    const { data, error } = await supabase.from('blogs').update(updates).eq('id', id).select().single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  // Local Secure Engine
+  const posts = readJSON(POSTS_FILE, []);
+  const index = posts.findIndex((p) => p.id === id);
+  if (index === -1) return null;
+
+  posts[index] = {
+    ...posts[index],
+    ...updates
+  };
+
+  writeJSON(POSTS_FILE, posts);
+  return posts[index];
+}
+
 async function deleteBlog(id) {
   // MongoDB
   if (activeDbType === 'MongoDB' && PostModel) {
@@ -379,6 +418,7 @@ module.exports = {
   getAllBlogs,
   getBlogById,
   createBlog,
+  updateBlog,
   deleteBlog,
   getStats,
   hashPassword,

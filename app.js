@@ -453,8 +453,9 @@ async function renderDashboardData() {
         <td><span class="blog-category" style="margin: 0;">${post.category}</span></td>
         <td>${post.date}</td>
         <td>
-          <div style="display: flex; gap: 0.5rem;">
-            <a href="blog-detail.html?id=${post.id}" class="btn btn-secondary btn-sm">View Page</a>
+          <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+            <a href="blog-detail.html?id=${post.id}" class="btn btn-secondary btn-sm">View</a>
+            <a href="edit-blog.html?id=${post.id}" class="btn btn-secondary btn-sm" style="color: var(--primary); font-weight: 600;">✏️ Edit</a>
             <button class="btn btn-danger btn-sm" onclick="deletePost('${post.id}')">Delete</button>
           </div>
         </td>
