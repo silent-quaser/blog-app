@@ -4,7 +4,8 @@
   "description": "Full-stack Blog Application with Express.js REST APIs and Vanilla JS Frontend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "echo 'Build ready'"
   },
   "keywords": [
     "blog",

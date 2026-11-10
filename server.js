@@ -410,4 +410,9 @@ async function startServer() {
   });
 }
 
-startServer();
+// Export for serverless hosting (Vercel) & local running
+module.exports = app;
+
+if (require.main === module || !process.env.VERCEL) {
+  startServer();
+}
