@@ -1,16 +1,18 @@
 /* ==========================================================================
    DevLog Backend Server - Node.js & Express.js REST API
-   Secure Database Integration: MongoDB / Supabase with Bcrypt Encryption
+   Secure JWT Authentication, Role Management & Database Integration
    ========================================================================== */
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'devlog-super-secret-jwt-key-2026';
 
 // Middleware
 app.use(cors());
@@ -27,6 +29,60 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname)));
 
 /* ==========================================================================
+   JWT Authentication Helpers & Middleware
+   ========================================================================== */
+
+function generateToken(user) {
+  return jwt.sign(
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+}
+
+// Authentication Middleware to Protect Private Routes
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'Access denied. Valid JWT authentication token required.'
+    });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decodedUser) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid or expired authentication session. Please log in again.'
+      });
+    }
+    req.user = decodedUser;
+    next();
+  });
+}
+
+// Optional Auth Helper: attaches user if token is present
+function optionalAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token) {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (!err) req.user = decoded;
+      next();
+    });
+  } else {
+    next();
+  }
+}
+
+/* ==========================================================================
    REST APIs
    ========================================================================== */
 
@@ -35,12 +91,13 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     database: db.getDatabaseStatus(),
+    jwtAuth: 'Active (HS256)',
     timestamp: new Date().toISOString(),
     service: 'DevLog Full-Stack Express Server'
   });
 });
 
-// 2. User Registration API (Securely hashed credentials)
+// 2. User Registration API (Returns Signed JWT Token)
 const handleRegister = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -53,9 +110,12 @@ const handleRegister = async (req, res) => {
     }
 
     const user = await db.registerUser({ name, email, password });
+    const token = generateToken(user);
+
     return res.status(201).json({
       success: true,
-      message: 'User registered successfully and credentials stored securely!',
+      message: 'User registered successfully and authenticated!',
+      token,
       user
     });
   } catch (err) {
@@ -69,7 +129,7 @@ const handleRegister = async (req, res) => {
 app.post('/api/auth/register', handleRegister);
 app.post('/api/register', handleRegister);
 
-// 3. User Login API (Bcrypt password verification)
+// 3. User Login API (Bcrypt verification + Returns Signed JWT Token)
 const handleLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -82,9 +142,12 @@ const handleLogin = async (req, res) => {
     }
 
     const user = await db.loginUser({ email, password });
+    const token = generateToken(user);
+
     return res.status(200).json({
       success: true,
       message: 'Login successful!',
+      token,
       user
     });
   } catch (err) {
@@ -98,7 +161,57 @@ const handleLogin = async (req, res) => {
 app.post('/api/auth/login', handleLogin);
 app.post('/api/login', handleLogin);
 
-// 4. Retrieve All Blogs from Database
+// 4. Protected User Profile API (GET /api/auth/me)
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const userProfile = await db.getUserByEmail(req.user.email);
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found.'
+      });
+    }
+
+    const stats = await db.getStats(req.user.email);
+
+    res.json({
+      success: true,
+      user: {
+        ...userProfile,
+        totalArticles: stats.userPosts
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve profile data.'
+    });
+  }
+});
+
+// 5. Protected Dashboard Route: Display Only Logged-In User's Blogs
+app.get('/api/dashboard/my-blogs', authenticateToken, async (req, res) => {
+  try {
+    const userBlogs = await db.getAllBlogs({ authorEmail: req.user.email });
+    const stats = await db.getStats(req.user.email);
+
+    res.json({
+      success: true,
+      user: req.user,
+      stats,
+      count: userBlogs.length,
+      blogs: userBlogs
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve user dashboard blogs.',
+      error: err.message
+    });
+  }
+});
+
+// 6. Retrieve All Blogs from Database (Public with optional filters)
 const handleGetBlogs = async (req, res) => {
   try {
     const { category, search, authorEmail } = req.query;
@@ -122,7 +235,7 @@ const handleGetBlogs = async (req, res) => {
 app.get('/api/blogs', handleGetBlogs);
 app.get('/api/posts', handleGetBlogs);
 
-// 5. Retrieve Individual Blog Details by ID
+// 7. Retrieve Individual Blog Details by ID
 const handleGetSingleBlog = async (req, res) => {
   try {
     const { id } = req.params;
@@ -152,10 +265,10 @@ const handleGetSingleBlog = async (req, res) => {
 app.get('/api/blogs/:id', handleGetSingleBlog);
 app.get('/api/posts/:id', handleGetSingleBlog);
 
-// 6. Create & Store Blog Post in Database
+// 8. Create Blog (Protected or optional auth)
 const handleCreateBlog = async (req, res) => {
   try {
-    const { title, category, excerpt, content, author, authorEmail, image } = req.body;
+    const { title, category, excerpt, content, image } = req.body;
 
     if (!title || !category || !excerpt || !content) {
       return res.status(400).json({
@@ -164,19 +277,23 @@ const handleCreateBlog = async (req, res) => {
       });
     }
 
+    // Determine author from authenticated JWT token or fallback
+    const authorName = req.user ? req.user.name : (req.body.author || 'Anonymous Author');
+    const authorEmail = req.user ? req.user.email : (req.body.authorEmail || '');
+
     const blog = await db.createBlog({
       title,
       category,
       excerpt,
       content,
-      author,
-      authorEmail,
+      author: authorName,
+      authorEmail: authorEmail,
       image
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Blog post saved securely to database!',
+      message: 'Blog post published and stored securely!',
       blog
     });
   } catch (err) {
@@ -188,10 +305,10 @@ const handleCreateBlog = async (req, res) => {
   }
 };
 
-app.post('/api/blogs', handleCreateBlog);
-app.post('/api/posts', handleCreateBlog);
+app.post('/api/blogs', optionalAuth, handleCreateBlog);
+app.post('/api/posts', optionalAuth, handleCreateBlog);
 
-// 7. Update Blog Post in Database (PUT /api/blogs/:id or PATCH /api/blogs/:id)
+// 9. Update Blog Post in Database
 const handleUpdateBlog = async (req, res) => {
   try {
     const { id } = req.params;
@@ -231,7 +348,7 @@ app.patch('/api/blogs/:id', handleUpdateBlog);
 app.put('/api/posts/:id', handleUpdateBlog);
 app.patch('/api/posts/:id', handleUpdateBlog);
 
-// 8. Delete Blog Post from Database
+// 10. Delete Blog Post from Database
 const handleDeleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
@@ -260,7 +377,7 @@ const handleDeleteBlog = async (req, res) => {
 app.delete('/api/blogs/:id', handleDeleteBlog);
 app.delete('/api/posts/:id', handleDeleteBlog);
 
-// 8. Dashboard Statistics API
+// 11. Dashboard General Stats API
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const { userEmail } = req.query;
@@ -285,6 +402,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`=================================================`);
     console.log(`🚀 DevLog Express & Database Server running on ${PORT}`);
+    console.log(`🔐 JWT Auth Protection: Active (24h validity)`);
     console.log(`🗄️ Active Database: ${db.getDatabaseStatus()}`);
     console.log(`📡 REST API Base:  http://localhost:${PORT}/api`);
     console.log(`🌐 Application UI: http://localhost:${PORT}`);

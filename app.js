@@ -1,11 +1,23 @@
 /* ==========================================================================
-   Modern Responsive Blog Application - Frontend Client
-   Connected to Express.js REST APIs with asynchronous Fetch API
+   Modern Responsive Blog Application - Frontend Client Engine
+   Secure JWT Session Management, Route Protection & REST API Integration
    ========================================================================== */
 
 const API_BASE = "/api";
 
-// Auth Session Management
+// 1. JWT & Session Management Helpers
+function getAuthToken() {
+  return localStorage.getItem("auth_token") || null;
+}
+
+function setAuthToken(token) {
+  if (token) {
+    localStorage.setItem("auth_token", token);
+  } else {
+    localStorage.removeItem("auth_token");
+  }
+}
+
 function getCurrentUser() {
   try {
     return JSON.parse(localStorage.getItem("current_user"));
@@ -22,23 +34,51 @@ function setCurrentUser(user) {
   }
 }
 
-// Dynamic Navigation Bar Setup
+function authHeaders(extraHeaders = {}) {
+  const headers = { ...extraHeaders };
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// Route Protection: Ensures unauthenticated users cannot access private pages
+function enforceRouteProtection() {
+  const protectedPages = ["dashboard.html", "create-blog.html", "edit-blog.html"];
+  const currentPath = window.location.pathname;
+
+  const isProtected = protectedPages.some((page) => currentPath.endsWith(page));
+  const token = getAuthToken();
+
+  if (isProtected && !token) {
+    const pageName = currentPath.substring(currentPath.lastIndexOf("/") + 1);
+    window.location.href = `login.html?redirect=${encodeURIComponent(pageName)}`;
+  }
+}
+
+// 2. Navigation Bar Rendering
 function setupNavbar() {
   const navLinksContainer = document.getElementById("navLinks");
   if (!navLinksContainer) return;
 
   const currentUser = getCurrentUser();
+  const token = getAuthToken();
   const currentPath = window.location.pathname;
 
   let linksHtml = `
     <li><a href="index.html" class="${currentPath.endsWith('index.html') || currentPath.endsWith('/') ? 'active' : ''}">Home</a></li>
   `;
 
-  if (currentUser) {
+  if (token && currentUser) {
     linksHtml += `
-      <li><a href="create-blog.html" class="${currentPath.endsWith('create-blog.html') ? 'active' : ''}">Create Blog</a></li>
+      <li><a href="create-blog.html" class="${currentPath.endsWith('create-blog.html') ? 'active' : ''}">+ Create Blog</a></li>
       <li><a href="dashboard.html" class="${currentPath.endsWith('dashboard.html') ? 'active' : ''}">Dashboard</a></li>
-      <li><span style="font-size:0.85rem; color: var(--text-muted); padding: 0 0.5rem;">Hi, <strong>${currentUser.name}</strong></span></li>
+      <li style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size:0.875rem; color: var(--text-muted); background: var(--primary-light); padding: 0.25rem 0.65rem; border-radius: 9999px;">
+          👤 <strong>${currentUser.name}</strong>
+        </span>
+      </li>
       <li><button onclick="handleLogout()" class="btn btn-secondary btn-sm">Logout</button></li>
     `;
   } else {
@@ -50,7 +90,7 @@ function setupNavbar() {
 
   navLinksContainer.innerHTML = linksHtml;
 
-  // Mobile menu toggle
+  // Mobile navigation drawer toggle
   const mobileToggle = document.getElementById("mobileToggle");
   if (mobileToggle) {
     mobileToggle.addEventListener("click", () => {
@@ -59,7 +99,9 @@ function setupNavbar() {
   }
 }
 
+// 3. Secure Logout Functionality
 function handleLogout() {
+  setAuthToken(null);
   setCurrentUser(null);
   window.location.href = "login.html";
 }
@@ -76,9 +118,7 @@ function showAlert(message, type = "danger") {
   }, 4500);
 }
 
-/* ==========================================================================
-   1. User Registration (Connected to POST /api/auth/register)
-   ========================================================================== */
+// 4. User Registration (Stores JWT Token)
 function setupRegisterForm() {
   const form = document.getElementById("registerForm");
   if (!form) return;
@@ -114,12 +154,14 @@ function setupRegisterForm() {
         return;
       }
 
-      // Auto login user session
+      // Store JWT token and user profile
+      setAuthToken(data.token);
       setCurrentUser(data.user);
-      showAlert("Registration successful! Redirecting to Dashboard...", "success");
+
+      showAlert("Account created successfully! Authenticating...", "success");
       setTimeout(() => {
         window.location.href = "dashboard.html";
-      }, 1200);
+      }, 1000);
     } catch (err) {
       console.error("API error during registration:", err);
       showAlert("Network error connecting to backend API.");
@@ -127,12 +169,17 @@ function setupRegisterForm() {
   });
 }
 
-/* ==========================================================================
-   2. User Login (Connected to POST /api/auth/login)
-   ========================================================================== */
+// 5. User Login (Stores JWT Token)
 function setupLoginForm() {
   const form = document.getElementById("loginForm");
   if (!form) return;
+
+  // Check if redirected from a protected route
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectTarget = urlParams.get("redirect");
+  if (redirectTarget) {
+    showAlert("Please log in with your credentials to access that private page.", "danger");
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -158,11 +205,14 @@ function setupLoginForm() {
         return;
       }
 
+      // Save JWT Token & User Session
+      setAuthToken(data.token);
       setCurrentUser(data.user);
+
       showAlert("Logged in successfully! Redirecting...", "success");
       setTimeout(() => {
-        window.location.href = "dashboard.html";
-      }, 1000);
+        window.location.href = redirectTarget || "dashboard.html";
+      }, 900);
     } catch (err) {
       console.error("API error during login:", err);
       showAlert("Network error connecting to backend API.");
@@ -170,16 +220,16 @@ function setupLoginForm() {
   });
 }
 
-/* ==========================================================================
-   3. Create Blog (Connected to POST /api/blogs)
-   ========================================================================== */
+// 6. Create Blog Form (Passes JWT Auth Header)
 function setupCreateBlogForm() {
   const form = document.getElementById("createBlogForm");
   if (!form) return;
 
   const currentUser = getCurrentUser();
-  if (!currentUser) {
-    window.location.href = "login.html";
+  const token = getAuthToken();
+
+  if (!token || !currentUser) {
+    window.location.href = "login.html?redirect=create-blog.html";
     return;
   }
 
@@ -209,7 +259,7 @@ function setupCreateBlogForm() {
     try {
       const response = await fetch(`${API_BASE}/blogs`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload)
       });
 
@@ -220,7 +270,7 @@ function setupCreateBlogForm() {
         return;
       }
 
-      showAlert("Blog published successfully to backend server!", "success");
+      showAlert("Blog published successfully to database!", "success");
       setTimeout(() => {
         window.location.href = "dashboard.html";
       }, 1000);
@@ -231,9 +281,7 @@ function setupCreateBlogForm() {
   });
 }
 
-/* ==========================================================================
-   4. Home Page Posts (Connected to GET /api/blogs)
-   ========================================================================== */
+// 7. Home Page Feed (Public)
 let activeCategory = "All";
 let searchTerm = "";
 
@@ -243,7 +291,7 @@ async function renderHomePosts() {
 
   grid.innerHTML = `
     <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-      <p style="color: var(--text-muted);">Fetching latest posts from backend API...</p>
+      <p style="color: var(--text-muted);">Fetching latest posts from database...</p>
     </div>
   `;
 
@@ -295,7 +343,7 @@ async function renderHomePosts() {
     console.error("Error fetching blogs:", err);
     grid.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--danger);">
-        Failed to load articles from the backend API. Ensure the Express server is running.
+        Failed to load articles from the database.
       </div>
     `;
   }
@@ -344,7 +392,7 @@ function setupHomeFilters() {
   });
 }
 
-// Modal Article Reader (Connected to GET /api/blogs/:id)
+// Modal Article Reader
 async function openPostModal(id) {
   const modal = document.getElementById("postModal");
   const modalBody = document.getElementById("modalBody");
@@ -375,6 +423,9 @@ async function openPostModal(id) {
       <div style="font-size: 1.05rem; line-height: 1.8; color: var(--text-main); white-space: pre-line;">
         ${post.content}
       </div>
+      <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; text-align: right;">
+        <a href="blog-detail.html?id=${post.id}" class="btn btn-primary btn-sm">Open Dedicated Page →</a>
+      </div>
     `;
   } catch (err) {
     console.error("Error loading blog details:", err);
@@ -387,58 +438,97 @@ function closeModal() {
   if (modal) modal.classList.remove("active");
 }
 
-/* ==========================================================================
-   5. Dashboard Handlers (Connected to Stats API & User Blogs API)
-   ========================================================================= */
+// 8. Protected Dashboard: Display Only Logged-in User's Blogs & Profile Data
 async function setupDashboard() {
+  const token = getAuthToken();
   const currentUser = getCurrentUser();
-  if (!currentUser) {
-    window.location.href = "login.html";
+
+  if (!token || !currentUser) {
+    window.location.href = "login.html?redirect=dashboard.html";
     return;
   }
 
-  const welcomeEl = document.getElementById("userWelcome");
-  if (welcomeEl) {
-    welcomeEl.textContent = `Welcome back, ${currentUser.name}!`;
-  }
+  // Load User Profile Section
+  loadUserProfile();
 
+  // Load User's Private Articles via Protected API
   await renderDashboardData();
 }
 
-async function renderDashboardData() {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return;
+async function loadUserProfile() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: authHeaders()
+    });
 
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (res.status === 401 || res.status === 403) {
+        handleLogout();
+        return;
+      }
+      return;
+    }
+
+    const u = data.user;
+    const profileNameEl = document.getElementById("profileUserName");
+    const profileEmailEl = document.getElementById("profileUserEmail");
+    const profileAvatarEl = document.getElementById("profileUserAvatar");
+    const profileDateEl = document.getElementById("profileUserCreated");
+    const profileCountEl = document.getElementById("profileUserCount");
+
+    if (profileNameEl) profileNameEl.textContent = u.name;
+    if (profileEmailEl) profileEmailEl.textContent = u.email;
+    if (profileAvatarEl) profileAvatarEl.textContent = (u.name || "U").charAt(0).toUpperCase();
+    if (profileDateEl) {
+      const d = new Date(u.createdAt);
+      profileDateEl.textContent = isNaN(d) ? "Nov 2026" : d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    }
+    if (profileCountEl) profileCountEl.textContent = u.totalArticles || 0;
+  } catch (err) {
+    console.error("Failed to load user profile:", err);
+  }
+}
+
+async function renderDashboardData() {
   const tableBody = document.getElementById("postsTableBody");
 
   try {
-    // 1. Fetch Stats API
-    const statsRes = await fetch(`${API_BASE}/dashboard/stats?userEmail=${encodeURIComponent(currentUser.email)}`);
-    const statsData = await statsRes.json();
-    if (statsData.success) {
-      const { totalPosts, userPosts, uniqueAuthors } = statsData.stats;
-      const statTotal = document.getElementById("statTotalPosts");
-      const statUser = document.getElementById("statUserPosts");
-      const statCommunity = document.getElementById("statCommunityAuthors");
+    // Call Protected API endpoint for ONLY logged-in user's blogs
+    const res = await fetch(`${API_BASE}/dashboard/my-blogs`, {
+      headers: authHeaders()
+    });
 
-      if (statTotal) statTotal.textContent = totalPosts;
-      if (statUser) statUser.textContent = userPosts;
-      if (statCommunity) statCommunity.textContent = uniqueAuthors;
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      if (res.status === 401 || res.status === 403) {
+        handleLogout();
+        return;
+      }
+      return;
     }
 
-    // 2. Fetch User's Published Blogs
-    const blogsRes = await fetch(`${API_BASE}/blogs?authorEmail=${encodeURIComponent(currentUser.email)}`);
-    const blogsData = await blogsRes.json();
-    const userPosts = blogsData.blogs || [];
+    const userPosts = data.blogs || [];
+    const stats = data.stats || { totalPosts: 0, userPosts: 0, uniqueAuthors: 0 };
+
+    // Update Stats Display
+    const statTotal = document.getElementById("statTotalPosts");
+    const statUser = document.getElementById("statUserPosts");
+    const statCommunity = document.getElementById("statCommunityAuthors");
+
+    if (statTotal) statTotal.textContent = stats.totalPosts;
+    if (statUser) statUser.textContent = userPosts.length;
+    if (statCommunity) statCommunity.textContent = stats.uniqueAuthors;
 
     if (!tableBody) return;
 
     if (userPosts.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-            You haven't published any blog posts yet. 
-            <a href="create-blog.html" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Create your first post!</a>
+          <td colspan="4" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+            <p style="font-size: 1.05rem; margin-bottom: 0.5rem;">You haven't written any articles yet.</p>
+            <a href="create-blog.html" class="btn btn-primary btn-sm">+ Write Your First Article</a>
           </td>
         </tr>
       `;
@@ -469,11 +559,12 @@ async function renderDashboardData() {
 }
 
 async function deletePost(id) {
-  if (!confirm("Are you sure you want to delete this blog post?")) return;
+  if (!confirm("Are you sure you want to permanently delete this blog post?")) return;
 
   try {
     const response = await fetch(`${API_BASE}/blogs/${id}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: authHeaders()
     });
     const data = await response.json();
 
@@ -490,6 +581,7 @@ async function deletePost(id) {
 
 // Global DOM Ready Initialization
 document.addEventListener("DOMContentLoaded", () => {
+  enforceRouteProtection();
   setupNavbar();
 
   setupRegisterForm();

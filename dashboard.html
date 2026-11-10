@@ -3,8 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard | DevLog</title>
+  <title>Author Dashboard | DevLog</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .profile-banner {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-left {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .profile-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #ffffff;
+      font-size: 1.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+    }
+
+    .profile-details h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .profile-details p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.15rem;
+    }
+
+    .role-badge {
+      font-size: 0.75rem;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .jwt-secure-pill {
+      font-size: 0.75rem;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+  </style>
 </head>
 <body>
   <!-- Navigation Header -->
@@ -21,25 +101,41 @@
   <!-- Dashboard Main Content -->
   <main>
     <div class="container">
-      <div class="dashboard-header">
-        <div>
-          <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main);" id="userWelcome">Dashboard</h1>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your published blog posts and review your content statistics.</p>
+      <!-- User Profile Header Section -->
+      <section class="profile-banner">
+        <div class="profile-left">
+          <div class="profile-avatar-large" id="profileUserAvatar">U</div>
+          <div class="profile-details">
+            <h2>
+              <span id="profileUserName">Loading Profile...</span>
+              <span class="role-badge">Verified Author</span>
+            </h2>
+            <p id="profileUserEmail">user@example.com</p>
+            <div style="margin-top: 0.35rem; display: flex; gap: 0.75rem; align-items: center; font-size: 0.8rem; color: var(--text-muted);">
+              <span>📅 Joined: <strong id="profileUserCreated">Nov 2026</strong></span>
+              <span>•</span>
+              <span>📝 Articles: <strong id="profileUserCount">0</strong></span>
+              <span>•</span>
+              <span class="jwt-secure-pill">🔐 JWT Protected Route</span>
+            </div>
+          </div>
         </div>
-        <div>
+
+        <div class="profile-actions">
           <a href="create-blog.html" class="btn btn-primary">+ Write New Blog</a>
+          <button onclick="handleLogout()" class="btn btn-secondary">Logout</button>
         </div>
-      </div>
+      </section>
 
       <!-- Stats Cards -->
       <section class="stats-grid">
         <div class="stat-card">
-          <h3>Total Community Posts</h3>
-          <div class="stat-value" id="statTotalPosts">0</div>
+          <h3>Your Published Articles</h3>
+          <div class="stat-value" id="statUserPosts">0</div>
         </div>
         <div class="stat-card">
-          <h3>Your Published Posts</h3>
-          <div class="stat-value" id="statUserPosts">0</div>
+          <h3>Total Community Posts</h3>
+          <div class="stat-value" id="statTotalPosts">0</div>
         </div>
         <div class="stat-card">
           <h3>Active Authors</h3>
@@ -47,27 +143,35 @@
         </div>
       </section>
 
-      <!-- Manage Posts Table -->
-      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">Your Articles</h2>
+      <!-- Manage Private Posts Table -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Your Articles (Private View)</h2>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Only you can manage your published content</span>
+      </div>
+
       <div class="data-table-container">
         <table class="data-table">
           <thead>
             <tr>
               <th>Title</th>
               <th>Category</th>
-              <th>Date</th>
+              <th>Published Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="postsTableBody">
-            <!-- Dynamically populated -->
+            <tr>
+              <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                Loading your private articles...
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
 
-  <!-- Modal for viewing full post preview -->
+  <!-- Modal for quick reading preview -->
   <div class="modal" id="postModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -78,7 +182,7 @@
   <!-- Footer -->
   <footer>
     <div class="container">
-      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS, JavaScript, Express, JWT & Database.</p>
     </div>
   </footer>
 

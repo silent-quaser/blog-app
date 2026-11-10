@@ -163,7 +163,7 @@
       try {
         const response = await fetch(`/api/blogs/${encodeURIComponent(postId)}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ title, category, image, excerpt, content })
         });
 

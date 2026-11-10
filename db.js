@@ -217,6 +217,48 @@ async function loginUser({ email, password }) {
   return { id: user.id, name: user.name, email: user.email };
 }
 
+async function getUserByEmail(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // MongoDB
+  if (activeDbType === 'MongoDB' && UserModel) {
+    const user = await UserModel.findOne({ email: normalizedEmail }).lean();
+    if (!user) return null;
+    return {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt || new Date().toISOString(),
+      role: 'Author'
+    };
+  }
+
+  // Supabase
+  if (activeDbType === 'Supabase' && supabase) {
+    const { data: user } = await supabase.from('users').select('*').eq('email', normalizedEmail).maybeSingle();
+    if (!user) return null;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.created_at || new Date().toISOString(),
+      role: 'Author'
+    };
+  }
+
+  // Local Secure Engine
+  const users = readJSON(USERS_FILE, []);
+  const user = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt || "2026-11-01T10:00:00.000Z",
+    role: 'Author'
+  };
+}
+
 // 4. Blog Post Operations
 async function getAllBlogs({ category, search, authorEmail } = {}) {
   let posts = [];
@@ -415,6 +457,7 @@ module.exports = {
   getDatabaseStatus,
   registerUser,
   loginUser,
+  getUserByEmail,
   getAllBlogs,
   getBlogById,
   createBlog,

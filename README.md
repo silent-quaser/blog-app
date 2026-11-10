@@ -1,52 +1,47 @@
 # DevLog - Full-Stack Secure Blog Application
 
-A complete full-stack blogging platform built with **HTML5/CSS3/JavaScript**, a **Node.js & Express.js** backend, **Database Persistence (MongoDB / Supabase / Bcrypt)**, and **Full CRUD Operations**.
+A complete full-stack blogging platform built with **HTML5/CSS3/JavaScript**, an **Express.js** REST API backend, **Database Persistence (MongoDB / Supabase / Bcrypt)**, **Full CRUD Operations**, and **Secure JWT Authentication & Role-Based Dashboard**.
 
 ---
 
 ## 🎯 Completed Key Objectives
 
-### 1. Full CRUD Operations
-| Operation | HTTP Method | Endpoint | Interface Page | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **Create** | `POST` | `/api/blogs` | [`create-blog.html`](create-blog.html) | Publish new articles with category, excerpt, cover image, and body. |
-| **Read (All)** | `GET` | `/api/blogs` | [`index.html`](index.html) | Retrieve all articles with search, category filtering, and author query. |
-| **Read (One)** | `GET` | `/api/blogs/:id` | [`blog-detail.html`](blog-detail.html) | Dedicated article detail page with reading time, author info, and formatted content. |
-| **Update** | `PUT` | `/api/blogs/:id` | [`edit-blog.html`](edit-blog.html) | Edit existing blog posts, modify fields, and save changes to the database. |
-| **Delete** | `DELETE` | `/api/blogs/:id` | [`dashboard.html`](dashboard.html) | Remove blog posts with client confirmation and live database deletion. |
+### 1. Secure JWT User Authentication & Session Management
+- **Token-Based Auth**: Generates signed JSON Web Tokens (`HS256`, 24h validity) on User Registration and Login.
+- **Password Security**: Passwords are encrypted with `bcryptjs` (10 salt rounds) before database storage.
+- **Token Verification Middleware**: `authenticateToken` validates the `Authorization: Bearer <token>` header on all protected private routes.
+- **Client Session Management**: Frontend stores the JWT in `localStorage` and automatically attaches it to all authenticated API requests.
 
-### 2. Search & Blog Category Filters
-- **Live Search**: Instant keyword search across post titles, excerpts, and authors with debounced input.
-- **Category Filter Pills**: Quick one-click category filtering for **Development**, **Design**, **JavaScript**, **AI & ML**, **DevOps**, and **General**.
+### 2. Route Protection for Private Dashboard
+- **Backend Protection**:
+  - `GET /api/dashboard/my-blogs` (Protected: Requires valid JWT)
+  - `GET /api/auth/me` (Protected: Requires valid JWT)
+- **Frontend Route Guards**: Unauthenticated users attempting to access [`dashboard.html`](dashboard.html), [`create-blog.html`](create-blog.html), or [`edit-blog.html`](edit-blog.html) are instantly redirected to `login.html?redirect=...`.
 
-### 3. Secure Database Connection
-- **MongoDB (Mongoose)** or **Supabase** support configured through `.env`.
-- **Bcrypt Password Security**: Hashes user credentials with 10 salt rounds. Plain-text passwords are never saved.
-- **Adaptive Fallback Engine**: Zero-configuration local database engine ensures the app runs out-of-the-box.
+### 3. User-Specific Dashboard (Private View)
+- The Author Dashboard calls the protected `/api/dashboard/my-blogs` endpoint and **displays only the articles authored by the currently logged-in user**.
+- Unrelated community articles are excluded from the user's private management table.
+
+### 4. User Profile & Logout Functionality
+- **Author Profile Banner**: Displays user's name, email, avatar initial, verified author badge, join date, and personal article count.
+- **One-Click Logout**: Clears the JWT session and redirects to `login.html`.
+- **Dynamic Navbar**: Displays active user status, avatar, and logout controls when authenticated; displays Login and Register when logged out.
 
 ---
 
-## 📂 Project Structure
+## 📋 Full CRUD Operations Matrix
 
-```
-blog-app/
-├── index.html           # Home page: Read all blogs, search & category filters
-├── blog-detail.html     # Read single blog: Dedicated article reader page
-├── create-blog.html     # Create blog: Author post editor
-├── edit-blog.html       # Update blog: Pre-populated post editor
-├── dashboard.html       # Manage blogs: Full CRUD controls (View, Edit, Delete)
-├── login.html           # User login with secure credential verification
-├── register.html        # User registration with bcrypt hashing
-├── style.css            # Responsive CSS Grid & Flexbox styles
-├── app.js               # Frontend API client and reactive UI updates
-├── server.js            # Express.js REST API server (Full CRUD endpoints)
-├── db.js                # Database abstraction layer (MongoDB / Supabase / Bcrypt)
-├── .env.example         # Environment template for MongoDB / Supabase
-├── data/
-│   ├── posts.json       # Persistent blog storage
-│   └── users.json       # Secure user storage (hashed passwords)
-└── package.json         # Project dependencies
-```
+| Operation | Method | API Endpoint | Auth Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Register** | `POST` | `/api/auth/register` | No | Creates user with hashed password and returns signed JWT token. |
+| **Login** | `POST` | `/api/auth/login` | No | Verifies credentials via bcrypt and returns signed JWT token. |
+| **Profile** | `GET` | `/api/auth/me` | **Yes (JWT)** | Retrieves authenticated user profile & article statistics. |
+| **My Blogs** | `GET` | `/api/dashboard/my-blogs` | **Yes (JWT)** | Retrieves **only** the authenticated user's articles. |
+| **Create Blog** | `POST` | `/api/blogs` | Optional/Yes | Publishes a new article attributed to the authenticated user. |
+| **Read (All)** | `GET` | `/api/blogs` | No | Public feed with live search & category filters. |
+| **Read (One)** | `GET` | `/api/blogs/:id` | No | Dedicated article detail page (`blog-detail.html`). |
+| **Update** | `PUT` | `/api/blogs/:id` | No/Yes | Edits existing blog article. |
+| **Delete** | `DELETE` | `/api/blogs/:id` | **Yes (JWT)** | Removes the article permanently from the database. |
 
 ---
 
@@ -62,3 +57,10 @@ blog-app/
    ```
 3. Open in your browser:
    👉 **http://localhost:3000**
+
+---
+
+## 🔑 Demo Account Credentials
+- **Email:** `demo@example.com`
+- **Password:** `password123`
+*(Or register a new account to test JWT generation and private dashboard isolation).*
