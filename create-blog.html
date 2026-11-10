@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Blog | DevLog</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks"></ul>
+    </div>
+  </header>
+
+  <!-- Create Blog Form Section -->
+  <main>
+    <div class="container" style="max-width: 800px;">
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main);">Publish a New Article</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Share your knowledge, tutorials, or dev journey with fellow creators.</p>
+      </div>
+
+      <div id="alertBox" class="alert"></div>
+
+      <div style="background: #ffffff; padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+        <form id="createBlogForm">
+          <div class="form-group">
+            <label for="title">Article Title *</label>
+            <input 
+              type="text" 
+              id="title" 
+              class="form-control" 
+              placeholder="e.g. Getting Started with Modern Web Development" 
+              required 
+            />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+              <label for="category">Category / Tag *</label>
+              <select id="category" class="form-control" required>
+                <option value="">Select a category</option>
+                <option value="Development">Development</option>
+                <option value="Design">Design</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="imageUrl">Cover Image URL (Optional)</label>
+              <input 
+                type="url" 
+                id="imageUrl" 
+                class="form-control" 
+                placeholder="https://images.unsplash.com/..." 
+              />
+              <div class="form-helper">Leave empty for an automatic placeholder</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="excerpt">Short Excerpt / Summary *</label>
+            <input 
+              type="text" 
+              id="excerpt" 
+              class="form-control" 
+              placeholder="A brief 1-2 sentence teaser for readers on the homepage..." 
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="content">Article Body (Full Content) *</label>
+            <textarea 
+              id="content" 
+              class="form-control" 
+              rows="8" 
+              placeholder="Write your article here. Supports multiple paragraphs..." 
+              required
+            ></textarea>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Publish Article</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

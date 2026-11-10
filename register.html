@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | DevLog</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks"></ul>
+    </div>
+  </header>
+
+  <!-- Register Form Section -->
+  <main>
+    <div class="container">
+      <div class="auth-wrapper">
+        <div class="auth-header">
+          <h2>Create an Account</h2>
+          <p>Join our developer blogging community today</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input 
+              type="text" 
+              id="name" 
+              class="form-control" 
+              placeholder="John Doe" 
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              class="form-control" 
+              placeholder="you@example.com" 
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              class="form-control" 
+              placeholder="At least 6 characters" 
+              minlength="6"
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              class="form-control" 
+              placeholder="Repeat password" 
+              required 
+            />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+        </form>
+
+        <div class="auth-footer">
+          Already have an account? <a href="login.html">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

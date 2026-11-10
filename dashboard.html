@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | DevLog</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks"></ul>
+    </div>
+  </header>
+
+  <!-- Dashboard Main Content -->
+  <main>
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-main);" id="userWelcome">Dashboard</h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your published blog posts and review your content statistics.</p>
+        </div>
+        <div>
+          <a href="create-blog.html" class="btn btn-primary">+ Write New Blog</a>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <h3>Total Community Posts</h3>
+          <div class="stat-value" id="statTotalPosts">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Your Published Posts</h3>
+          <div class="stat-value" id="statUserPosts">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Active Authors</h3>
+          <div class="stat-value" id="statCommunityAuthors">0</div>
+        </div>
+      </section>
+
+      <!-- Manage Posts Table -->
+      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">Your Articles</h2>
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="postsTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for viewing full post preview -->
+  <div class="modal" id="postModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

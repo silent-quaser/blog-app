@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevLog | Modern Responsive Blog Application</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <!-- Rendered dynamically by app.js based on auth state -->
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>Insights, Ideas & <span>Tech Stories</span></h1>
+        <p>A modern blogging platform built with clean HTML5, responsive CSS3, and interactive vanilla JavaScript.</p>
+        <div>
+          <a href="create-blog.html" class="btn btn-primary">Start Writing 🚀</a>
+          <a href="register.html" class="btn btn-secondary" style="margin-left: 0.5rem;">Join Community</a>
+        </div>
+      </section>
+
+      <!-- Search & Filters -->
+      <section class="controls-bar">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="🔍 Search articles by title, keywords or author..." 
+        />
+        <div class="filter-tags">
+          <button class="filter-btn active" data-category="All">All</button>
+          <button class="filter-btn" data-category="Development">Development</button>
+          <button class="filter-btn" data-category="Design">Design</button>
+          <button class="filter-btn" data-category="JavaScript">JavaScript</button>
+          <button class="filter-btn" data-category="General">General</button>
+        </div>
+      </section>
+
+      <!-- Blog Cards Grid -->
+      <section class="blog-grid" id="blogGrid">
+        <!-- Populated dynamically by app.js -->
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal for viewing full blog post -->
+  <div class="modal" id="postModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div id="modalBody">
+        <!-- Dynamically injected -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

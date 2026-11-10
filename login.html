@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | DevLog</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        ✍️ Dev<span>Log</span>
+      </a>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">☰</button>
+      <ul class="nav-links" id="navLinks"></ul>
+    </div>
+  </header>
+
+  <!-- Login Form Section -->
+  <main>
+    <div class="container">
+      <div class="auth-wrapper">
+        <div class="auth-header">
+          <h2>Welcome Back</h2>
+          <p>Enter your credentials to access your dashboard</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              class="form-control" 
+              placeholder="demo@example.com" 
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              class="form-control" 
+              placeholder="••••••••" 
+              required 
+            />
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            <span>💡 Quick test account: <code>demo@example.com</code> / <code>password123</code></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+          Don't have an account yet? <a href="register.html">Create an Account</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DevLog Application. Built with HTML, CSS & JavaScript.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
